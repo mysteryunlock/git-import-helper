@@ -14,7 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      field_definitions: {
+        Row: {
+          address_role: string | null
+          category: string
+          created_at: string
+          field_key: string
+          field_name: string
+          id: string
+          is_active: boolean
+          order_index: number
+        }
+        Insert: {
+          address_role?: string | null
+          category: string
+          created_at?: string
+          field_key: string
+          field_name: string
+          id?: string
+          is_active?: boolean
+          order_index?: number
+        }
+        Update: {
+          address_role?: string | null
+          category?: string
+          created_at?: string
+          field_key?: string
+          field_name?: string
+          id?: string
+          is_active?: boolean
+          order_index?: number
+        }
+        Relationships: []
+      }
+      records: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
