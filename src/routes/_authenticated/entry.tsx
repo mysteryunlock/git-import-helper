@@ -17,6 +17,7 @@ import {
   type FieldDefinition,
 } from "@/lib/emi-data";
 import { cn } from "@/lib/utils";
+import { AutoScanId } from "@/components/AutoScanId";
 
 export const Route = createFileRoute("/_authenticated/entry")({
   head: () => ({
