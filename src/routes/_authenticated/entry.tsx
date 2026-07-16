@@ -147,7 +147,15 @@ function EntryPage() {
         ))}
       </div>
 
+      <AutoScanId
+        fields={active}
+        onApply={(vals) =>
+          setValues((prev) => ({ ...prev, ...vals }))
+        }
+      />
+
       <Card>
+
         <CardContent className="space-y-4 p-4">
           <h2 className="text-base font-semibold">{currentCategory} details</h2>
 
