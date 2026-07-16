@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 export type Category = "Personal" | "Family" | "Contact" | "Address" | "Document";
 export const CATEGORIES: Category[] = ["Personal", "Family", "Contact", "Address", "Document"];
 
+export type FieldType = "text" | "select";
+
 export interface FieldDefinition {
   id: string;
   field_name: string;
@@ -11,6 +13,8 @@ export interface FieldDefinition {
   is_active: boolean;
   order_index: number;
   address_role: "permanent" | "current" | null;
+  field_type: FieldType;
+  options: string[];
   created_at: string;
 }
 
