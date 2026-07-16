@@ -114,6 +114,14 @@ function RecordsPage() {
                 <Trash2 className="h-4 w-4" /> Delete
               </Button>
             </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-10 w-full gap-2"
+              onClick={() => copyFullProfile(rec)}
+            >
+              <ClipboardList className="h-4 w-4" /> Copy Full Profile
+            </Button>
             {CATEGORIES.map((cat) => {
               const catFields = fields.filter((f) => f.category === cat && rec.data[f.field_key]);
               if (catFields.length === 0) return null;
