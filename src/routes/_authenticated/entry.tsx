@@ -178,20 +178,38 @@ function EntryPage() {
             {stepFields.map((f) => {
               const isCurrent = f.address_role === "current";
               const disabled = isCurrent && sameAsPermanent;
+              const isSelect = f.field_type === "select" && (f.options?.length ?? 0) > 0;
               return (
                 <div key={f.id} className="space-y-1.5">
                   <Label htmlFor={f.field_key} className="text-sm">
                     {f.field_name}
                   </Label>
-                  <Input
-                    id={f.field_key}
-                    value={values[f.field_key] ?? ""}
-                    onChange={(e) => setValue(f.field_key, e.target.value)}
-                    disabled={disabled}
-                    inputMode={inputModeFor(f.field_key)}
-                    className="h-12 text-base"
-                    placeholder={`Enter ${f.field_name.toLowerCase()}`}
-                  />
+                  {isSelect ? (
+                    <select
+                      id={f.field_key}
+                      value={values[f.field_key] ?? ""}
+                      onChange={(e) => setValue(f.field_key, e.target.value)}
+                      disabled={disabled}
+                      className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Select {f.field_name.toLowerCase()}…</option>
+                      {f.options.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <Input
+                      id={f.field_key}
+                      value={values[f.field_key] ?? ""}
+                      onChange={(e) => setValue(f.field_key, e.target.value)}
+                      disabled={disabled}
+                      inputMode={inputModeFor(f.field_key)}
+                      className="h-12 text-base"
+                      placeholder={`Enter ${f.field_name.toLowerCase()}`}
+                    />
+                  )}
                 </div>
               );
             })}
