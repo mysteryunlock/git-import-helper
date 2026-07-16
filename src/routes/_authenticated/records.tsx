@@ -4,8 +4,8 @@ import { AppShell } from "@/components/AppShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Copy, Trash2 } from "lucide-react";
-import { CATEGORIES, deleteRecord, fetchFields, fetchRecords } from "@/lib/emi-data";
+import { Copy, Trash2, ClipboardList } from "lucide-react";
+import { CATEGORIES, deleteRecord, fetchFields, fetchRecords, type RecordRow } from "@/lib/emi-data";
 
 export const Route = createFileRoute("/_authenticated/records")({
   head: () => ({
@@ -41,6 +41,35 @@ function RecordsPage() {
       qc.invalidateQueries({ queryKey: ["records"] });
     } catch (e) {
       toast.error((e as Error).message);
+    }
+  };
+
+  const copyFullProfile = async (rec: RecordRow) => {
+    const name = rec.data.full_name ?? "";
+    const dob = rec.data.dob ?? "";
+    const citizenshipNo = rec.data.citizenship_no ?? "";
+    const panNo = rec.data.pan ?? "";
+    const mobile = rec.data.mobile ?? "";
+    const email = rec.data.email ?? "";
+    const address = [rec.data.perm_address, rec.data.perm_city, rec.data.perm_state, rec.data.perm_pincode]
+      .filter(Boolean)
+      .join(", ");
+
+    const profile = [
+      `Name: ${name}`,
+      `DOB: ${dob}`,
+      `Citizenship No: ${citizenshipNo}`,
+      `PAN No: ${panNo}`,
+      `Mobile: ${mobile}`,
+      `Email: ${email}`,
+      `Address: ${address}`,
+    ].join("\n");
+
+    try {
+      await navigator.clipboard.writeText(profile);
+      toast.success("Copied all details to clipboard!", { position: "bottom-center" });
+    } catch {
+      toast.error("Copy failed", { position: "bottom-center" });
     }
   };
 
@@ -85,6 +114,14 @@ function RecordsPage() {
                 <Trash2 className="h-4 w-4" /> Delete
               </Button>
             </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-10 w-full gap-2"
+              onClick={() => copyFullProfile(rec)}
+            >
+              <ClipboardList className="h-4 w-4" /> Copy Full Profile
+            </Button>
             {CATEGORIES.map((cat) => {
               const catFields = fields.filter((f) => f.category === cat && rec.data[f.field_key]);
               if (catFields.length === 0) return null;
