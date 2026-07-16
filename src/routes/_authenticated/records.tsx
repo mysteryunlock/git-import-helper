@@ -4,8 +4,8 @@ import { AppShell } from "@/components/AppShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Copy, Trash2 } from "lucide-react";
-import { CATEGORIES, deleteRecord, fetchFields, fetchRecords } from "@/lib/emi-data";
+import { Copy, Trash2, ClipboardList } from "lucide-react";
+import { CATEGORIES, deleteRecord, fetchFields, fetchRecords, type RecordRow } from "@/lib/emi-data";
 
 export const Route = createFileRoute("/_authenticated/records")({
   head: () => ({
