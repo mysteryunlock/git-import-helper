@@ -25,7 +25,6 @@ function isSafeNext(next: string | undefined): next is string {
 }
 
 function AuthPage() {
-  const navigate = useNavigate();
   const { next } = Route.useSearch();
   const safeNext = isSafeNext(next) ? next : "/";
   const [mode, setMode] = useState<"signin" | "signup">("signin");
