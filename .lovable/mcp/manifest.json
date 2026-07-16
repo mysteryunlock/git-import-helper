@@ -1,0 +1,154 @@
+{
+  "version": 1,
+  "sdk_version": "0.22.2",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://zzvlgxejfvyxkoidafdd.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "emi-form-builder-mcp",
+      "version": "0.1.0",
+      "title": "EMI Form Builder"
+    },
+    "tools": [
+      {
+        "name": "list_fields",
+        "title": "List fields",
+        "description": "List all field definitions belonging to the signed-in user, including name, key, section (category), and whether the field is active in the entry form.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "add_field",
+        "title": "Add field",
+        "description": "Add a new field definition for the signed-in user. The field appears in the entry form under the given section.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "field_name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Human-readable label, e.g. 'Phone Number'."
+            },
+            "category": {
+              "type": "string",
+              "enum": [
+                "Personal",
+                "Family",
+                "Contact",
+                "Address",
+                "Document"
+              ],
+              "description": "Section/tab the field belongs to."
+            }
+          },
+          "required": [
+            "field_name",
+            "category"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "delete_field",
+        "title": "Delete field",
+        "description": "Delete a field definition owned by the signed-in user. Existing record data for the field is preserved in the records table.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The field definition id to delete."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_records",
+        "title": "List records",
+        "description": "List records belonging to the signed-in user, newest first. Each record has an id, timestamps, and a `data` object keyed by field_key.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "description": "Maximum number of records to return (default 50)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_record",
+        "title": "Create record",
+        "description": "Create a new record for the signed-in user. `data` is an object keyed by field_key (see list_fields). Unknown keys are stored as-is in the JSONB column.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Field values keyed by field_key, e.g. { full_name: 'Ada', mobile: '555…' }."
+            }
+          },
+          "required": [
+            "data"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
