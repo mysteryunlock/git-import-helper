@@ -21,8 +21,10 @@ export type Database = {
           created_at: string
           field_key: string
           field_name: string
+          field_type: string
           id: string
           is_active: boolean
+          options: Json
           order_index: number
           user_id: string
         }
@@ -32,8 +34,10 @@ export type Database = {
           created_at?: string
           field_key: string
           field_name: string
+          field_type?: string
           id?: string
           is_active?: boolean
+          options?: Json
           order_index?: number
           user_id: string
         }
@@ -43,8 +47,10 @@ export type Database = {
           created_at?: string
           field_key?: string
           field_name?: string
+          field_type?: string
           id?: string
           is_active?: boolean
+          options?: Json
           order_index?: number
           user_id?: string
         }
