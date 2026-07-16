@@ -9,104 +9,90 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as RecordsRouteImport } from './routes/records'
-import { Route as EntryRouteImport } from './routes/entry'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedRecordsRouteImport } from './routes/_authenticated/records'
+import { Route as AuthenticatedEntryRouteImport } from './routes/_authenticated/entry'
 
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/_authenticated/settings',
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RecordsRoute = RecordsRouteImport.update({
-  id: '/records',
+const AuthenticatedRecordsRoute = AuthenticatedRecordsRouteImport.update({
+  id: '/_authenticated/records',
   path: '/records',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EntryRoute = EntryRouteImport.update({
-  id: '/entry',
+const AuthenticatedEntryRoute = AuthenticatedEntryRouteImport.update({
+  id: '/_authenticated/entry',
   path: '/entry',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/entry': typeof EntryRoute
-  '/records': typeof RecordsRoute
-  '/settings': typeof SettingsRoute
+  '/entry': typeof AuthenticatedEntryRoute
+  '/records': typeof AuthenticatedRecordsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/entry': typeof EntryRoute
-  '/records': typeof RecordsRoute
-  '/settings': typeof SettingsRoute
+  '/entry': typeof AuthenticatedEntryRoute
+  '/records': typeof AuthenticatedRecordsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/entry': typeof EntryRoute
-  '/records': typeof RecordsRoute
-  '/settings': typeof SettingsRoute
+  '/_authenticated/entry': typeof AuthenticatedEntryRoute
+  '/_authenticated/records': typeof AuthenticatedRecordsRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/entry' | '/records' | '/settings'
+  fullPaths: '/entry' | '/records' | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/entry' | '/records' | '/settings'
-  id: '__root__' | '/' | '/entry' | '/records' | '/settings'
+  to: '/entry' | '/records' | '/settings'
+  id:
+    | '__root__'
+    | '/_authenticated/entry'
+    | '/_authenticated/records'
+    | '/_authenticated/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  EntryRoute: typeof EntryRoute
-  RecordsRoute: typeof RecordsRoute
-  SettingsRoute: typeof SettingsRoute
+  AuthenticatedEntryRoute: typeof AuthenticatedEntryRoute
+  AuthenticatedRecordsRoute: typeof AuthenticatedRecordsRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/settings': {
-      id: '/settings'
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
       path: '/settings'
       fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/records': {
-      id: '/records'
+    '/_authenticated/records': {
+      id: '/_authenticated/records'
       path: '/records'
       fullPath: '/records'
-      preLoaderRoute: typeof RecordsRouteImport
+      preLoaderRoute: typeof AuthenticatedRecordsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/entry': {
-      id: '/entry'
+    '/_authenticated/entry': {
+      id: '/_authenticated/entry'
       path: '/entry'
       fullPath: '/entry'
-      preLoaderRoute: typeof EntryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthenticatedEntryRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  EntryRoute: EntryRoute,
-  RecordsRoute: RecordsRoute,
-  SettingsRoute: SettingsRoute,
+  AuthenticatedEntryRoute: AuthenticatedEntryRoute,
+  AuthenticatedRecordsRoute: AuthenticatedRecordsRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

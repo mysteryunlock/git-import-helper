@@ -18,7 +18,7 @@ import {
 } from "@/lib/emi-data";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/entry")({
+export const Route = createFileRoute("/_authenticated/entry")({
   head: () => ({
     meta: [
       { title: "New Entry — EMI Form Builder" },
