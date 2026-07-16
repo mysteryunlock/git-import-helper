@@ -73,6 +73,18 @@ export async function updateFieldName(id: string, field_name: string) {
   if (error) throw error;
 }
 
+export async function updateFieldTypeAndOptions(
+  id: string,
+  field_type: FieldType,
+  options: string[],
+) {
+  const { error } = await supabase
+    .from("field_definitions" as never)
+    .update({ field_type, options: field_type === "select" ? options : [] } as never)
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function deleteField(id: string) {
   const { error } = await supabase
     .from("field_definitions" as never)
@@ -93,12 +105,13 @@ function slugify(s: string) {
 export async function createField(input: {
   field_name: string;
   category: Category;
+  field_type?: FieldType;
+  options?: string[];
 }): Promise<void> {
   const { data: userData, error: userErr } = await supabase.auth.getUser();
   if (userErr || !userData.user) throw new Error("Not signed in");
 
   const base = slugify(input.field_name);
-  // Ensure uniqueness per user
   const { data: existing } = await supabase
     .from("field_definitions" as never)
     .select("field_key,order_index")
@@ -112,6 +125,9 @@ export async function createField(input: {
     0,
   );
 
+  const field_type = input.field_type ?? "text";
+  const options = field_type === "select" ? input.options ?? [] : [];
+
   const { error } = await supabase.from("field_definitions" as never).insert({
     user_id: userData.user.id,
     field_name: input.field_name.trim(),
@@ -120,6 +136,9 @@ export async function createField(input: {
     order_index: maxOrder + 1,
     is_active: true,
     address_role: null,
+    field_type,
+    options,
   } as never);
   if (error) throw error;
 }
+
