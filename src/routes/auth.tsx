@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,11 +14,19 @@ export const Route = createFileRoute("/auth")({
       { name: "description", content: "Sign in to access your EMI records." },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
   component: AuthPage,
 });
 
+function isSafeNext(next: string | undefined): next is string {
+  return !!next && next.startsWith("/") && !next.startsWith("//");
+}
+
 function AuthPage() {
-  const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const safeNext = isSafeNext(next) ? next : "/";
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,9 +34,9 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/" });
+      if (data.session) window.location.replace(safeNext);
     });
-  }, [navigate]);
+  }, [safeNext]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +46,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/` },
+          options: { emailRedirectTo: `${window.location.origin}${safeNext}` },
         });
         if (error) throw error;
         toast.success("Account created");
@@ -46,7 +54,9 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      navigate({ to: "/" });
+      // Use full navigation so consent route re-reads session and authorization_id.
+      window.location.replace(safeNext);
+      return;
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
