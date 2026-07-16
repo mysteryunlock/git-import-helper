@@ -1,7 +1,10 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { ClipboardList, LayoutGrid, Settings as SettingsIcon, FilePlus2 } from "lucide-react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { ClipboardList, LayoutGrid, LogOut, Settings as SettingsIcon, FilePlus2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 
 const tabs = [
   { to: "/", label: "Home", icon: LayoutGrid },
@@ -12,16 +15,27 @@ const tabs = [
 
 export function AppShell({ title, children }: { title: string; children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const signOut = async () => {
+    await qc.cancelQueries();
+    qc.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  };
   return (
     <div className="min-h-screen bg-muted/30 pb-24">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               EMI Form Builder
             </p>
             <h1 className="truncate text-lg font-semibold">{title}</h1>
           </div>
+          <Button variant="ghost" size="sm" onClick={signOut} className="shrink-0 gap-1.5">
+            <LogOut className="h-4 w-4" /> Sign out
+          </Button>
         </div>
       </header>
       <main className="mx-auto max-w-2xl px-4 pt-4">{children}</main>

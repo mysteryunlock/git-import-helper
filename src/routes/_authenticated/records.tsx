@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Copy, Trash2 } from "lucide-react";
 import { CATEGORIES, deleteRecord, fetchFields, fetchRecords } from "@/lib/emi-data";
 
-export const Route = createFileRoute("/records")({
+export const Route = createFileRoute("/_authenticated/records")({
   head: () => ({
     meta: [
       { title: "Records — EMI Form Builder" },
