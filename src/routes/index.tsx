@@ -1,24 +1,76 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { AppShell } from "@/components/AppShell";
+import { Card, CardContent } from "@/components/ui/card";
+import { ClipboardList, FilePlus2, Settings as SettingsIcon, ArrowRight } from "lucide-react";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "EMI Form Builder — Dynamic Records" },
+      {
+        name: "description",
+        content:
+          "Build dynamic EMI forms, capture records, and copy any field with one tap. Mobile-first form builder.",
+      },
+      { property: "og:title", content: "EMI Form Builder" },
+      {
+        property: "og:description",
+        content: "Dynamic mobile form builder for EMI records.",
+      },
+    ],
+  }),
+  component: Home,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+const items = [
+  {
+    to: "/entry",
+    title: "New Entry",
+    desc: "Fill the multi-step form with active fields.",
+    icon: FilePlus2,
+  },
+  {
+    to: "/records",
+    title: "View Records",
+    desc: "Browse and one-tap copy any saved field.",
+    icon: ClipboardList,
+  },
+  {
+    to: "/settings",
+    title: "Field Settings",
+    desc: "Toggle which fields appear in the form.",
+    icon: SettingsIcon,
+  },
+] as const;
+
+function Home() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <AppShell title="Home">
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          A dynamic, mobile-first form builder. Configure fields once, capture records fast, and
+          copy any value with a single tap.
+        </p>
+        {items.map((it) => {
+          const Icon = it.icon;
+          return (
+            <Link key={it.to} to={it.to}>
+              <Card className="transition active:scale-[0.99] hover:border-primary/40">
+                <CardContent className="flex items-center gap-4 p-4">
+                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold">{it.title}</p>
+                    <p className="truncate text-sm text-muted-foreground">{it.desc}</p>
+                  </div>
+                  <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
+    </AppShell>
   );
 }
