@@ -40,7 +40,11 @@ export async function fetchRecords(): Promise<RecordRow[]> {
 }
 
 export async function createRecord(data: Record<string, string>) {
-  const { error } = await supabase.from("records" as never).insert({ data } as never);
+  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !userData.user) throw new Error("Not signed in");
+  const { error } = await supabase
+    .from("records" as never)
+    .insert({ data, user_id: userData.user.id } as never);
   if (error) throw error;
 }
 
