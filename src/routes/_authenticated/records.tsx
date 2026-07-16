@@ -44,6 +44,35 @@ function RecordsPage() {
     }
   };
 
+  const copyFullProfile = async (rec: RecordRow) => {
+    const name = rec.data.full_name ?? "";
+    const dob = rec.data.dob ?? "";
+    const citizenshipNo = rec.data.citizenship_no ?? "";
+    const panNo = rec.data.pan ?? "";
+    const mobile = rec.data.mobile ?? "";
+    const email = rec.data.email ?? "";
+    const address = [rec.data.perm_address, rec.data.perm_city, rec.data.perm_state, rec.data.perm_pincode]
+      .filter(Boolean)
+      .join(", ");
+
+    const profile = [
+      `Name: ${name}`,
+      `DOB: ${dob}`,
+      `Citizenship No: ${citizenshipNo}`,
+      `PAN No: ${panNo}`,
+      `Mobile: ${mobile}`,
+      `Email: ${email}`,
+      `Address: ${address}`,
+    ].join("\n");
+
+    try {
+      await navigator.clipboard.writeText(profile);
+      toast.success("Copied all details to clipboard!", { position: "bottom-center" });
+    } catch {
+      toast.error("Copy failed", { position: "bottom-center" });
+    }
+  };
+
   if (isLoading) {
     return (
       <AppShell title="Records">
