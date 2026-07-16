@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -33,15 +34,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, Check, X } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import {
   CATEGORIES,
   type Category,
+  type FieldDefinition,
+  type FieldType,
   createField,
   deleteField,
   fetchFields,
   updateFieldActive,
   updateFieldName,
+  updateFieldTypeAndOptions,
 } from "@/lib/emi-data";
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -57,6 +61,13 @@ export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
 });
 
+function parseOptions(text: string): string[] {
+  return text
+    .split(/\r?\n|,/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 function SettingsPage() {
   const qc = useQueryClient();
   const { data: fields = [], isLoading } = useQuery({
@@ -64,13 +75,20 @@ function SettingsPage() {
     queryFn: fetchFields,
   });
 
+  // Add
   const [addOpen, setAddOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newCategory, setNewCategory] = useState<Category>("Personal");
+  const [newType, setNewType] = useState<FieldType>("text");
+  const [newOptions, setNewOptions] = useState("");
   const [creating, setCreating] = useState(false);
 
-  const [editingId, setEditingId] = useState<string | null>(null);
+  // Edit
+  const [editField, setEditField] = useState<FieldDefinition | null>(null);
   const [editName, setEditName] = useState("");
+  const [editType, setEditType] = useState<FieldType>("text");
+  const [editOptions, setEditOptions] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
@@ -86,29 +104,43 @@ function SettingsPage() {
     }
   };
 
-  const startEdit = (id: string, name: string) => {
-    setEditingId(id);
-    setEditName(name);
+  const openEdit = (f: FieldDefinition) => {
+    setEditField(f);
+    setEditName(f.field_name);
+    setEditType(f.field_type);
+    setEditOptions((f.options ?? []).join("\n"));
   };
 
   const saveEdit = async () => {
-    if (!editingId) return;
+    if (!editField) return;
     const name = editName.trim();
     if (!name) {
       toast.error("Name cannot be empty");
       return;
     }
-    const id = editingId;
-    qc.setQueryData(["fields"], (old: typeof fields | undefined) =>
-      (old ?? []).map((f) => (f.id === id ? { ...f, field_name: name } : f)),
-    );
-    setEditingId(null);
+    const opts = parseOptions(editOptions);
+    if (editType === "select" && opts.length === 0) {
+      toast.error("Add at least one dropdown option");
+      return;
+    }
+    setSavingEdit(true);
     try {
-      await updateFieldName(id, name);
-      toast.success("Field renamed");
+      if (name !== editField.field_name) {
+        await updateFieldName(editField.id, name);
+      }
+      if (
+        editType !== editField.field_type ||
+        JSON.stringify(opts) !== JSON.stringify(editField.options ?? [])
+      ) {
+        await updateFieldTypeAndOptions(editField.id, editType, opts);
+      }
+      toast.success("Field updated");
+      setEditField(null);
+      qc.invalidateQueries({ queryKey: ["fields"] });
     } catch (e) {
       toast.error((e as Error).message);
-      qc.invalidateQueries({ queryKey: ["fields"] });
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -118,12 +150,24 @@ function SettingsPage() {
       toast.error("Enter a field name");
       return;
     }
+    const opts = parseOptions(newOptions);
+    if (newType === "select" && opts.length === 0) {
+      toast.error("Add at least one dropdown option");
+      return;
+    }
     setCreating(true);
     try {
-      await createField({ field_name: name, category: newCategory });
+      await createField({
+        field_name: name,
+        category: newCategory,
+        field_type: newType,
+        options: opts,
+      });
       toast.success("Field added");
       setNewName("");
       setNewCategory("Personal");
+      setNewType("text");
+      setNewOptions("");
       setAddOpen(false);
       qc.invalidateQueries({ queryKey: ["fields"] });
     } catch (e) {
@@ -194,6 +238,33 @@ function SettingsPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-1.5">
+                <Label>Field type</Label>
+                <Select value={newType} onValueChange={(v) => setNewType(v as FieldType)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text">Text input</SelectItem>
+                    <SelectItem value="select">Dropdown / Select</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {newType === "select" && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="new-field-options">Options</Label>
+                  <Textarea
+                    id="new-field-options"
+                    value={newOptions}
+                    onChange={(e) => setNewOptions(e.target.value)}
+                    placeholder={"One per line, e.g.\nMale\nFemale\nOther"}
+                    rows={4}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    One option per line. Commas also work.
+                  </p>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setAddOpen(false)}>
@@ -221,81 +292,48 @@ function SettingsPage() {
                 </p>
                 <Card>
                   <CardContent className="divide-y p-0">
-                    {catFields.map((f) => {
-                      const editing = editingId === f.id;
-                      return (
-                        <div
-                          key={f.id}
-                          className="flex items-center justify-between gap-3 p-4"
-                        >
-                          <div className="min-w-0 flex-1">
-                            {editing ? (
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  value={editName}
-                                  onChange={(e) => setEditName(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") saveEdit();
-                                    if (e.key === "Escape") setEditingId(null);
-                                  }}
-                                  autoFocus
-                                  className="h-9"
-                                />
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-9 w-9 shrink-0"
-                                  onClick={saveEdit}
-                                >
-                                  <Check className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-9 w-9 shrink-0"
-                                  onClick={() => setEditingId(null)}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <>
-                                <p className="truncate text-sm font-medium">{f.field_name}</p>
-                                <p className="text-xs text-muted-foreground">{f.field_key}</p>
-                              </>
-                            )}
-                          </div>
-                          {!editing && (
-                            <div className="flex items-center gap-1">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-9 w-9"
-                                onClick={() => startEdit(f.id, f.field_name)}
-                                aria-label="Rename"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-9 w-9 text-destructive hover:text-destructive"
-                                onClick={() =>
-                                  setDeleteTarget({ id: f.id, name: f.field_name })
-                                }
-                                aria-label="Delete"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                              <Switch
-                                checked={f.is_active}
-                                onCheckedChange={(v) => toggle(f.id, v)}
-                              />
-                            </div>
-                          )}
+                    {catFields.map((f) => (
+                      <div
+                        key={f.id}
+                        className="flex items-center justify-between gap-3 p-4"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{f.field_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {f.field_key} ·{" "}
+                            {f.field_type === "select"
+                              ? `Dropdown (${f.options?.length ?? 0})`
+                              : "Text"}
+                          </p>
                         </div>
-                      );
-                    })}
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-9 w-9"
+                            onClick={() => openEdit(f)}
+                            aria-label="Edit"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-9 w-9 text-destructive hover:text-destructive"
+                            onClick={() =>
+                              setDeleteTarget({ id: f.id, name: f.field_name })
+                            }
+                            aria-label="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Switch
+                            checked={f.is_active}
+                            onCheckedChange={(v) => toggle(f.id, v)}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </CardContent>
                 </Card>
               </div>
@@ -303,6 +341,60 @@ function SettingsPage() {
           })}
         </div>
       )}
+
+      <Dialog open={!!editField} onOpenChange={(o) => !o && setEditField(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit field</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-field-name">Field name</Label>
+              <Input
+                id="edit-field-name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Field type</Label>
+              <Select value={editType} onValueChange={(v) => setEditType(v as FieldType)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="text">Text input</SelectItem>
+                  <SelectItem value="select">Dropdown / Select</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {editType === "select" && (
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-field-options">Options</Label>
+                <Textarea
+                  id="edit-field-options"
+                  value={editOptions}
+                  onChange={(e) => setEditOptions(e.target.value)}
+                  placeholder={"One per line, e.g.\nMale\nFemale\nOther"}
+                  rows={5}
+                />
+                <p className="text-xs text-muted-foreground">
+                  One option per line. Commas also work.
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditField(null)}>
+              Cancel
+            </Button>
+            <Button onClick={saveEdit} disabled={savingEdit}>
+              {savingEdit ? "Saving…" : "Save changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog
         open={!!deleteTarget}
